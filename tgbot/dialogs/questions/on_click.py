@@ -56,6 +56,24 @@ async def on_univercity_input(m: Message, widget: Any, dialog_manager: DialogMan
     await dialog_manager.next(show_mode=ShowMode.EDIT)
 
 
+async def save_data(data: dict, config: Config):
+    agcm = await config.gspread_conf.agcm.authorize()
+    sheet = await agcm.open('TMsheet')
+    wk = await sheet.get_worksheet(0)
+    logging.info(data)
+    await wk.append_row(
+        [
+            data['city'],
+            data['event_date'],
+            data['name'],
+            data['univercity'],
+            data['phone'],
+            data['date'],
+            data['user_name'],
+            data['user_id']]
+    )
+
+
 async def on_phone(m: Message, widget: Any, dialog_manager: DialogManager):
     ctx = dialog_manager.current_context()
     answer = m.text
@@ -63,21 +81,15 @@ async def on_phone(m: Message, widget: Any, dialog_manager: DialogManager):
     ctx.dialog_data['data']['phone'] = answer
     await m.delete()
     data = ctx.dialog_data['data']
-    phone, univercity, date, name = data['phone'], data['univercity'], str(data['date']), data['phone']
-    agcm = await config.gspread_conf.agcm.authorize()
-    sheet = await agcm.open('TMsheet')
-    wk = await sheet.get_worksheet(0)
-    logging.info(ctx.start_data['date'])
-    logging.info(date)
-    asyncio.create_task(wk.append_row(
-        [ctx.start_data['city'],
-         ctx.start_data['date'].strftime("%d.%m.%Y"),
-         name,
-         univercity,
-         phone,
-         date,
-         m.from_user.username]
-    )
+    data['event_date'] = ctx.start_data['date'].strftime("%d.%m.%Y")
+    data['city'] = ctx.start_data['city']
+    data['user_id'] = dialog_manager.event.from_user.id
+    data['user_name'] = dialog_manager.event.from_user.username
+    asyncio.create_task(
+        save_data(
+            data,
+            config
+        )
     )
     await m.bot.send_message(m.from_user.id, 'Ваша анкета сохранена мы с вами свяжемся по указанному номеру ')
     await dialog_manager.done(show_mode=ShowMode.DELETE_AND_SEND)

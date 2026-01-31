@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
+from aiogram.types import BotCommand
 from aiogram_dialog import setup_dialogs
 
 from tgbot.config import load_config, Config
@@ -93,10 +94,13 @@ async def main():
 
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher(storage=storage)
-    dp.include_routers(*dialog_router_list)
-
-    setup_dialogs(dp)
     dp.include_routers(*routers_list)
+
+    dp.include_routers(*dialog_router_list)
+    await bot.set_my_commands(
+        [BotCommand(command='/start', description='start')]
+    )
+    setup_dialogs(dp)
 
     register_global_middlewares(dp, config)
 
@@ -108,4 +112,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        logging.error("Бот був вимкнений!")
+        logging.error("bot is offline")
