@@ -8,20 +8,22 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage, DefaultKeyBuilder
 from aiogram.types import BotCommand
 from aiogram_dialog import setup_dialogs
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from tgbot.config import load_config, Config
 from tgbot.dialogs import dialog_router_list
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
+from tgbot.misc.scheduler import scheduler_for_all_users
 from tgbot.misc.sheet_amanger import GspreadManager
 from tgbot.services import broadcaster
 
 
 async def on_startup(bot: Bot, admin_ids: list[int]):
-    await broadcaster.broadcast(bot, admin_ids, "Бот був запущений")
+    await broadcaster.broadcast(bot, admin_ids, "Bot is online")
 
 
-def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager:GspreadManager,session_pool=None):
+def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager:GspreadManager,scheduler:AsyncIOScheduler,session_pool=None):
     """
     Register global middlewares for the given dispatcher.
     Global middlewares here are the ones that are applied to all the handlers (you specify the type of update)
@@ -33,7 +35,7 @@ def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager:Gspre
     :return: None
     """
     middleware_types = [
-        ConfigMiddleware(config, sh_manager),
+        ConfigMiddleware(config, sh_manager,scheduler),
         # DatabaseMiddleware(session_pool),
     ]
 
@@ -92,9 +94,16 @@ async def main():
     setup_logging()
     config = load_config(".env")
     sh_manager = GspreadManager()
+
+    all_data = await sh_manager.all_data()
+    scheduler = AsyncIOScheduler()
+    scheduler.start()
     storage = get_storage(config)
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher(storage=storage)
+
+    asyncio.create_task(scheduler_for_all_users(all_data, scheduler, bot))
+
     dp.include_routers(*routers_list)
 
     dp.include_routers(*dialog_router_list)
@@ -103,7 +112,7 @@ async def main():
     )
     setup_dialogs(dp)
 
-    register_global_middlewares(dp, config, sh_manager)
+    register_global_middlewares(dp, config, sh_manager,scheduler)
 
     await on_startup(bot, config.tg_bot.admin_ids)
     await dp.start_polling(bot)

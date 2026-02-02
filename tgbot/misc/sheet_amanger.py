@@ -7,7 +7,7 @@ from google.oauth2.service_account import Credentials
 class GspreadManager:
 
     def __init__(self):
-        self.agcm = gspread_asyncio.AsyncioGspreadClientManager(self.get_creds())
+        self.agcm = gspread_asyncio.AsyncioGspreadClientManager(self.get_creds)
 
     @staticmethod
     def get_creds():

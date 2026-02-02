@@ -5,9 +5,10 @@ from aiogram.types import Message
 
 
 class ConfigMiddleware(BaseMiddleware):
-    def __init__(self, config, sheet_manager) -> None:
+    def __init__(self, config, sheet_manager, scheduler) -> None:
         self.config = config
         self.sh_manager = sheet_manager
+        self.scheduler = scheduler
 
     async def __call__(
         self,
@@ -17,5 +18,6 @@ class ConfigMiddleware(BaseMiddleware):
     ) -> Any:
         data["config"] = self.config
         data["sh_manager"] = self.sh_manager
+        data['scheduler'] = self.scheduler
         return await handler(event, data)
 
