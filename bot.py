@@ -23,7 +23,8 @@ async def on_startup(bot: Bot, admin_ids: list[int]):
     await broadcaster.broadcast(bot, admin_ids, "Bot is online")
 
 
-def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager:GspreadManager,scheduler:AsyncIOScheduler,session_pool=None):
+def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager: GspreadManager, scheduler: AsyncIOScheduler,
+                                session_pool=None):
     """
     Register global middlewares for the given dispatcher.
     Global middlewares here are the ones that are applied to all the handlers (you specify the type of update)
@@ -35,7 +36,7 @@ def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager:Gspre
     :return: None
     """
     middleware_types = [
-        ConfigMiddleware(config, sh_manager,scheduler),
+        ConfigMiddleware(config, sh_manager, scheduler),
         # DatabaseMiddleware(session_pool),
     ]
 
@@ -89,6 +90,12 @@ def get_storage(config):
     else:
         return MemoryStorage()
 
+async def notify_offline(bot: Bot, admin_ids: list[int]) -> None:
+    for admin_id in admin_ids:
+        try:
+            await bot.send_message(admin_id, "❌ Bot is OFFLINE")
+        except Exception:
+            logging.exception("Failed to notify admin about shutdown")
 
 async def main():
     setup_logging()
@@ -101,6 +108,9 @@ async def main():
     storage = get_storage(config)
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher(storage=storage)
+    @dp.shutdown()
+    async def on_shutdown(bot: Bot, **_):
+        await notify_offline(bot, config.tg_bot.admin_ids)
 
     asyncio.create_task(scheduler_for_all_users(all_data, scheduler, bot))
 
@@ -112,14 +122,15 @@ async def main():
     )
     setup_dialogs(dp)
 
-    register_global_middlewares(dp, config, sh_manager,scheduler)
+    register_global_middlewares(dp, config, sh_manager, scheduler)
 
     await on_startup(bot, config.tg_bot.admin_ids)
+
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
+    except Exception:
         logging.error("bot is offline")
