@@ -4,6 +4,8 @@ redis
 betterlogging
 aiogram-dialog
 # # For enabling api:
+gspread-asyncio
+babel
 # backoff
 # ujson
 # yarl

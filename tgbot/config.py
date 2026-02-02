@@ -186,7 +186,7 @@ class Config:
     """
 
     tg_bot: TgBot
-    gspread_conf: GspreadConf
+    # gspread_conf: GspreadConf
     misc: Miscellaneous
     db: Optional[DbConfig] = None
     redis: Optional[RedisConfig] = None
@@ -207,7 +207,6 @@ def load_config(path: str = None) -> Config:
 
     return Config(
         tg_bot=TgBot.from_env(env),
-        gspread_conf=GspreadConf.from_env(env),
         # db=DbConfig.from_env(env),
         # redis=RedisConfig.from_env(env),
         misc=Miscellaneous(),

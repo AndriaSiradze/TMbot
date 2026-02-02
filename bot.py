@@ -13,6 +13,7 @@ from tgbot.config import load_config, Config
 from tgbot.dialogs import dialog_router_list
 from tgbot.handlers import routers_list
 from tgbot.middlewares.config import ConfigMiddleware
+from tgbot.misc.sheet_amanger import GspreadManager
 from tgbot.services import broadcaster
 
 
@@ -20,7 +21,7 @@ async def on_startup(bot: Bot, admin_ids: list[int]):
     await broadcaster.broadcast(bot, admin_ids, "Бот був запущений")
 
 
-def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=None):
+def register_global_middlewares(dp: Dispatcher, config: Config, sh_manager:GspreadManager,session_pool=None):
     """
     Register global middlewares for the given dispatcher.
     Global middlewares here are the ones that are applied to all the handlers (you specify the type of update)
@@ -32,7 +33,7 @@ def register_global_middlewares(dp: Dispatcher, config: Config, session_pool=Non
     :return: None
     """
     middleware_types = [
-        ConfigMiddleware(config),
+        ConfigMiddleware(config, sh_manager),
         # DatabaseMiddleware(session_pool),
     ]
 
@@ -90,8 +91,8 @@ def get_storage(config):
 async def main():
     setup_logging()
     config = load_config(".env")
+    sh_manager = GspreadManager()
     storage = get_storage(config)
-
     bot = Bot(token=config.tg_bot.token, default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher(storage=storage)
     dp.include_routers(*routers_list)
@@ -102,7 +103,7 @@ async def main():
     )
     setup_dialogs(dp)
 
-    register_global_middlewares(dp, config)
+    register_global_middlewares(dp, config, sh_manager)
 
     await on_startup(bot, config.tg_bot.admin_ids)
     await dp.start_polling(bot)
