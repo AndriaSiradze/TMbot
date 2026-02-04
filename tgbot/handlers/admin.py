@@ -10,7 +10,7 @@ admin_router = Router()
 admin_router.message.filter(AdminFilter())
 
 
-@admin_router.message(CommandStart())
-async def admin_start(message: Message, dialog_manager:DialogManager):
-    await dialog_manager.start(SelectStudies.select_date)
-
+# @admin_router.message(CommandStart())
+# async def admin_start(message: Message, dialog_manager:DialogManager):
+#     await dialog_manager.start(SelectStudies.select_date)
+#

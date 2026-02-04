@@ -13,49 +13,8 @@ from aiogram_dialog.widgets.text import Text, Format
 from babel.dates import get_day_names, get_month_names
 
 from tgbot.dialogs.questions.on_click import on_answer, on_phone, on_univercity_input, on_city, \
-    skip_uni, calendar_input, on_calendar_input
+    skip_uni, on_calendar_input
 from tgbot.misc.states import QuestionAnswer
-
-
-def _locale(manager: DialogManager) -> str:
-    # Always Russian:
-    return "ru"  # or "ru_RU"
-    # Or user-based:
-    # lc = (manager.event.from_user.language_code or "ru").replace("-", "_")
-    # return lc
-
-
-class WeekDay(Text):
-    async def _render_text(self, data, manager: DialogManager) -> str:
-        d: date = data["date"]
-        return get_day_names(width="short", context="stand-alone", locale=_locale(manager))[d.weekday()].title()
-
-
-class Month(Text):
-    async def _render_text(self, data, manager: DialogManager) -> str:
-        d: date = data["date"]
-        return get_month_names("wide", context="stand-alone", locale=_locale(manager))[d.month].title()
-
-
-class RuCalendar(Calendar):
-    def _init_views(self) -> dict[CalendarScope, CalendarScopeView]:
-        return {
-            CalendarScope.DAYS: CalendarDaysView(
-                self._item_callback_data,
-                date_text=DATE_TEXT,
-                today_text=TODAY_TEXT,
-                header_text=Month() + " " + Format("{date:%Y}"),
-                weekday_text=WeekDay(),
-                next_month_text=Month() + " >>",
-                prev_month_text="<< " + Month(),
-            ),
-            CalendarScope.MONTHS: CalendarMonthView(
-                self._item_callback_data,
-                month_text=Month(),
-                header_text=Format("{date:%Y}"),
-            ),
-            CalendarScope.YEARS: CalendarYearsView(self._item_callback_data),
-        }
 
 
 def name_window():
@@ -77,7 +36,7 @@ def birth_window():
             id='age_group',
             width=3
         ),
-        MessageInput(func=calendar_input),
+        # MessageInput(func=calendar_input),
         state=QuestionAnswer.age,
     )
 

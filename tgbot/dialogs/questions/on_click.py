@@ -14,26 +14,30 @@ from tgbot.misc.sheet_amanger import GspreadManager
 
 async def on_answer(m: Message, widget: Any, dialog_manager: DialogManager):
     ctx = dialog_manager.current_context()
-    data = {'name': m.text, }
-    await m.delete()
+    logging.info('on answer')
+    data = {'name': m.text,
+            'date': ''}
     ctx.dialog_data['data'] = data
+    logging.info(ctx.dialog_data)
+
+    await m.delete()
     await dialog_manager.next(show_mode=ShowMode.EDIT)
 
 
 async def on_calendar_input(c: CallbackQuery, widget: Button, dialog_manager: DialogManager):
     ctx = dialog_manager.current_context()
-
+    logging.info(ctx.dialog_data)
     logging.info(widget.widget_id)
     ctx.dialog_data['data']['date'] = widget.widget_id
     await dialog_manager.next(show_mode=ShowMode.EDIT)
 
-
-async def calendar_input(m: Message, widget: Any, dialog_manager: DialogManager):
-    ctx = dialog_manager.current_context()
-    answer = m.text
-    ctx.dialog_data['data']['date'] = answer
-    await m.delete()
-    await dialog_manager.next(show_mode=ShowMode.EDIT)
+#
+# async def calendar_input(m: Message, widget: Any, dialog_manager: DialogManager):
+#     ctx = dialog_manager.current_context()
+#     answer = m.text
+#     ctx.dialog_data['data']['date'] = answer
+#     await m.delete()
+#     await dialog_manager.next(show_mode=ShowMode.EDIT)
 
 
 async def on_city(m: Message, widget: Any, dialog_manager: DialogManager):
@@ -66,13 +70,13 @@ async def on_phone(m: Message, widget: Any, dialog_manager: DialogManager):
     scheduler: AsyncIOScheduler = dialog_manager.middleware_data['scheduler']
 
     user_id = dialog_manager.event.from_user.id
-    date = ctx.start_data['date']
+    date = ctx.start_data.get('date')
     ctx.dialog_data['data']['phone'] = answer
 
 
     await m.delete()
     data = ctx.dialog_data['data']
-    data['event_date'] = date.strftime("%d.%m.%Y")
+    data['event_date'] = date.strftime("%d.%m.%Y") if date else ''
     data['city'] = ctx.start_data['city']
     data['user_id'] = user_id
     data['user_name'] = dialog_manager.event.from_user.username
@@ -82,7 +86,11 @@ async def on_phone(m: Message, widget: Any, dialog_manager: DialogManager):
             data,
         )
     )
-    await schedule_reminder_message(scheduler, user_id, date, dialog_manager.event.bot)
-    await m.bot.send_message(m.from_user.id,
+    if date:
+        await schedule_reminder_message(scheduler, user_id, date, dialog_manager.event.bot)
+        await m.bot.send_message(m.from_user.id,
                              'Вы успешно зарегистрированы на обучение, мы вам напомним о начале курсе в телеграме')
+    else:
+        await m.bot.send_message(m.from_user.id,
+                                 'Вы успешно зарегистрированы Мы свяжемся с вами в телеграме')
     await dialog_manager.done(show_mode=ShowMode.DELETE_AND_SEND)

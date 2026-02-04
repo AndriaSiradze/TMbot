@@ -27,4 +27,8 @@ studies = {
             'datetime': datetime.datetime(year=2026, month=4, day=25),
         },
     ],
+    'Другой': [
+        {
+        },
+    ],
 }
