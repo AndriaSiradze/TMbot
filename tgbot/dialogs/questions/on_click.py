@@ -43,7 +43,7 @@ async def on_calendar_input(c: CallbackQuery, widget: Button, dialog_manager: Di
 async def on_city(m: Message, widget: Any, dialog_manager: DialogManager):
     ctx = dialog_manager.current_context()
     answer = m.text
-    ctx.dialog_data['data']['city'] = answer
+    ctx.dialog_data['data']['origin_city'] = answer
     await m.delete()
 
     await dialog_manager.next(show_mode=ShowMode.EDIT)

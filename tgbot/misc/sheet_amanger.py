@@ -37,6 +37,7 @@ class GspreadManager:
                 data['city'],
                 data['event_date'],
                 data['name'],
+                data['origin_city'],
                 data['univercity'],
                 data['phone'],
                 data['date'],
